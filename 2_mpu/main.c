@@ -29,7 +29,7 @@ int main(void)
 	printf("[Kernel] Switch to unprivileged thread mode & start user task (psp_init = 0x%x).\r\n\n", (unsigned int)psp_init);
 
 	//start user task
-	start_user((uint32_t *)user_task, psp_init);
+	start_user((uint32_t *)user_task, psp_init);//跳到user_task
 
 	blink(LED_ORANGE); //should not go here
 }
@@ -43,25 +43,45 @@ void user_task(void)
 void set_mpu(void)
 {
 	//set region 0: flash (0x00000000), 1MB, allow execution, full access, enable all subregion
-	REG(MPU_BASE + MPU_RBAR_OFFSET) = MPU_RBAR_VALUE(0x00000000,0);//Set base address
-	REG(MPU_BASE + MPU_RASR_OFFSET) = 
-		MPU_RASR_VALUE(MPU_XN_DISABLE, MPU_AP_FULL_ACCESS, MPU_TYPE_FLASH, 0, MPU_REGION_SIZE_1MB);
+	REG(MPU_BASE + MPU_RBAR_OFFSET) = MPU_RBAR_VALUE(0x00000000,0);//Set base address//定義起始位置,區域//set region 0
+	REG(MPU_BASE + MPU_RASR_OFFSET) = MPU_RASR_VALUE(MPU_XN_DISABLE, MPU_AP_FULL_ACCESS, MPU_TYPE_FLASH, 0, MPU_REGION_SIZE_1MB);
 		//MPU_RASR_VALUE(xn, ap, type, srd, size)
+		//xn ＝ 准許執行
+		//ap=011  privilige_mode r/w user_mode r/w full access
+		//type=00010 flash
+		//srd=0 子區域啟用
+		//size =10010 1MB	
 
 	//set region 1: sram (0x20000000), 128KB, forbid execution, full access, enable all subregion
-	REG(MPU_BASE + MPU_RBAR_OFFSET) = MPU_RBAR_VALUE(0x20000000,1);//Set base address
-	REG(MPU_BASE + MPU_RASR_OFFSET) = 
-		MPU_RASR_VALUE(MPU_XN_ENABLE, MPU_AP_FULL_ACCESS, MPU_TYPE_SRAM, 0, MPU_REGION_SIZE_128KB);
+	REG(MPU_BASE + MPU_RBAR_OFFSET) = MPU_RBAR_VALUE(0x20000000,1);//Set base address//set region 1
+	REG(MPU_BASE + MPU_RASR_OFFSET) =MPU_RASR_VALUE(MPU_XN_ENABLE, MPU_AP_FULL_ACCESS, MPU_TYPE_SRAM, 0, MPU_REGION_SIZE_128KB);
+		//MPU_RASR_VALUE(xn, ap, type, srd, size)
+		//xn ＝ 准許執行
+		//ap=011  privilige_mode r/w user_mode r/w full access
+		//type=00110 內部sram
+		//srd=0 子區域啟用
+		//size =100000 128kB	
 
 	//set region 2: RCC_AHB1ENR, 32B, forbid execution, full access, enable all subregion
-	REG(MPU_BASE + MPU_RBAR_OFFSET) = MPU_RBAR_VALUE(RCC_BASE + RCC_AHB1ENR_OFFSET,2);//Set base address
-	REG(MPU_BASE + MPU_RASR_OFFSET) = 
-		MPU_RASR_VALUE(MPU_XN_ENABLE, MPU_AP_FULL_ACCESS, MPU_TYPE_FLASH, 0, MPU_REGION_SIZE_32B);
+	REG(MPU_BASE + MPU_RBAR_OFFSET) = MPU_RBAR_VALUE(RCC_BASE + RCC_AHB1ENR_OFFSET,2);//Set base address//set region 2
+	REG(MPU_BASE + MPU_RASR_OFFSET) = MPU_RASR_VALUE(MPU_XN_ENABLE, MPU_AP_FULL_ACCESS, MPU_TYPE_FLASH, 0, MPU_REGION_SIZE_32B);
+		//MPU_RASR_VALUE(xn, ap, type, srd, size)
+		//xn ＝ 准許執行
+		//ap=011  privilige_mode r/w user_mode r/w full access
+		//type=00110 內部sram
+		//srd=0 子區域啟用
+		//size =00100 32B	
 
 	//set region 3: GPIOD, 32B, forbid execution, full access, enable all subregion
-	REG(MPU_BASE + MPU_RBAR_OFFSET) = MPU_RBAR_VALUE(GPIO_BASE(GPIO_PORTD) ,3);//Set base address
-	REG(MPU_BASE + MPU_RASR_OFFSET) = 
-		MPU_RASR_VALUE(MPU_XN_ENABLE, MPU_AP_FULL_ACCESS, MPU_TYPE_PERIPHERALS, 0, MPU_REGION_SIZE_32B);
+	REG(MPU_BASE + MPU_RBAR_OFFSET) = MPU_RBAR_VALUE(GPIO_BASE(GPIO_PORTD) ,3);//Set base address//set region 3
+	REG(MPU_BASE + MPU_RASR_OFFSET) = MPU_RASR_VALUE(MPU_XN_ENABLE, MPU_AP_FULL_ACCESS, MPU_TYPE_PERIPHERALS, 0, MPU_REGION_SIZE_32B);
+		//MPU_RASR_VALUE(xn, ap, type, srd, size)
+		//xn ＝ 准許執行
+		//ap=011  privilige_mode r/w user_mode r/w full access
+		//type=00101 外設
+		//srd=0 子區域啟用
+		//size =00100 32B	
+
 
 	//disable region 4 ~ 7
 	for (int i=4;i<=7;i++)
@@ -72,7 +92,9 @@ void set_mpu(void)
 
 	//enable the default memory map as a background region for privileged access (PRIVDEFENA)
 	SET_BIT(MPU_BASE + MPU_CTRL_OFFSET, MPU_PRIVDEFENA_BIT);
+	//privilige_mode可以訪問背景reigon
 
 	//enable mpu
 	SET_BIT(MPU_BASE + MPU_CTRL_OFFSET, MPU_ENABLE_BIT);
+	//打開mpu
 }

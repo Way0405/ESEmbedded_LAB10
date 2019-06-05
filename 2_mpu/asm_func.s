@@ -40,9 +40,7 @@ start_user:
 sw_priv:
 	mov r0,0b10
 	msr control,r0
-	/*
-	嘗試在unpriviliged的狀態下 改成priviliged,應該會失敗
-	*/
+	//嘗試在unpriviliged的狀態下 改成priviliged,應該會失敗
 	isb
 	bx lr
 	
